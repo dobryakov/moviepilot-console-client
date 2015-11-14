@@ -36,7 +36,7 @@ class MoviePilotClient
     #p self.current_state.name
     puts "Where are you want to go to?"
     choose do |menu|
-      menu.prompt = "Please input the number:"
+      menu.prompt = "Please enter the number:"
       menu.choice(:tag) {
         say("Let's go to tags menu")
         self.tag!
@@ -49,7 +49,14 @@ class MoviePilotClient
   end
 
   def tag_menu
-    tag = ask("What tag are you interested in?  ") { |q| q.default = "superheroes" }
+    puts "What tag are you interested in?  "
+    tag = choose do |menu|
+      menu.prompt = "Please enter the number:"
+      %w(superheroes horror young-adult tv).each{|i|
+        menu.choice(i.to_sym)
+      }
+    end
+    puts "Looking for tag #{tag}"
     response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/tags/#{tag}/trending" )
     if response['collection'].count > 0
       puts "What do you want to read?"
