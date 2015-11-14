@@ -9,3 +9,6 @@ gem 'highline'
 
 # https://github.com/rest-client/rest-client
 gem 'rest-client'
+
+# https://github.com/xijo/reverse_markdown
+gem 'reverse_markdown'
