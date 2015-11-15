@@ -6,8 +6,9 @@ require 'reverse_markdown'
 class MoviePilotClient
   include Workflow
 
-  @id = nil
-  @type = nil
+  @id    = nil
+  @type  = nil
+  @items = []
 
   workflow do
 
@@ -18,12 +19,18 @@ class MoviePilotClient
 
     state :tag do
       event :read,      :transitions_to => :read
+      event :list,      :transitions_to => :list
       event :not_found, :transitions_to => :new
     end
 
     state :search do
       event :read,      :transitions_to => :read
+      event :list,      :transitions_to => :list
       event :not_found, :transitions_to => :new
+    end
+
+    state :list do
+      event :read,      :transitions_to => :read
     end
 
     state :read do
@@ -33,7 +40,9 @@ class MoviePilotClient
   end
 
   def start_menu
-    #p self.current_state.name
+    @id    = nil
+    @type  = nil
+    @items = []
     puts "Where are you want to go to?"
     choose do |menu|
       menu.prompt = "Please enter the number:"
@@ -59,33 +68,32 @@ class MoviePilotClient
     puts "Looking for tag #{tag}"
     response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/tags/#{tag}/trending" )
     if response['collection'].count > 0
-      puts "What do you want to read?"
-      response['collection'].each{|item|
-        puts "#{item['id']} (#{item['type']}): #{item['title']}"
-      }
-      @id = ask("Enter the ID of item:  ") { |q| q.default = "3631704" }
-      @type = response['collection'].select{|item| item['id'].to_i == @id.to_i}.first['type']
-      self.read!
+      @items = response['collection']
+      self.list!
     else
       self.not_found!
     end
   end
 
   def search_menu
-    #p self.current_state.name
     term = ask("What do you want to find?  ") { |q| q.default = "terminator" }
     response = JSON.parse( RestClient.get "http://api.moviepilot.com/v3/search?q=#{term}&per_page=10&without_type=user,tag" )
     if response['search'].count > 0
-      puts "What do you want to read?"
-      response['search'].each{|item|
-        puts "#{item['id']} (#{item['type']}): #{item['name']}"
-      }
-      @id = ask("Enter the ID of item:  ") { |q| q.default = "3362113" }
-      @type = response['search'].select{|item| item['id'].to_i == @id.to_i}.first['type']
-      self.read!
+      @items = response['search']
+      self.list!
     else
       self.not_found!
     end
+  end
+
+  def list_items
+    puts "What do you want to read?"
+    @items.each{|item|
+      puts "#{item['id']} (#{item['type']}): #{item['name'] || item['title']}"
+    }
+    @id = ask("Enter the ID of item:  ") { |q| q.default = @items.first['id'].to_s }
+    @type = @items.select{|item| item['id'].to_i == @id.to_i}.first['type']
+    self.read!
   end
 
   def read_item
@@ -107,6 +115,8 @@ loop do
       client.tag_menu
     when :search
       client.search_menu
+    when :list
+      client.list_items
     when :read
       client.read_item
     else
