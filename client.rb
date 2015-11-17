@@ -119,14 +119,19 @@ class MoviePilotClient
 
   def read_item
     slowput "SysOp: Here is the #{@type} with id #{@id}".colorize(:green)
-    response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/#{@type}s/#{@id}" )
-    if response['html_body'].to_s.length > 0
+    response = false
+    begin
+      #                                                              @TODO: use pluralize
+      response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/#{@type}s/#{@id}" )
+    rescue
+    end
+    if response && response['html_body'].to_s.length > 0
       puts ReverseMarkdown.convert response['html_body']
       # @TODO with ascii art
-      #image_urls = URI.extract(response['html_body']).select{ |l| l[/\.(?:gif|png|jpe?g)\b/]}
-      #image_urls.each{|url|
+      # image_urls = URI.extract(response['html_body']).select{ |l| l[/\.(?:gif|png|jpe?g)\b/]}
+      # image_urls.each{|url|
       #  puts url
-      #}
+      # }
       slowput "SysOp: Have a nice day!".colorize(:green)
       slowput "Carrier lost\n\n".colorize(:red)
     else
