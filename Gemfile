@@ -16,3 +16,6 @@ gem 'reverse_markdown'
 # https://github.com/fazibear/colorize
 gem 'colorize'
 
+# @TODO process links to images into asciiart
+# https://github.com/nodanaonlyzuul/asciiart
+# gem 'asciiart'

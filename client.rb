@@ -80,7 +80,7 @@ class MoviePilotClient
         menu.choice(i.to_sym)
       }
     end
-    slowput  "Looking for tag #{tag}".colorize(:green)
+    slowput "SysOp: Looking for tag #{tag}...".colorize(:green)
     response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/tags/#{tag}/trending" )
     if response['collection'].count > 0
       @items = response['collection']
@@ -116,6 +116,13 @@ class MoviePilotClient
     response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/#{@type}s/#{@id}" )
     if response['html_body'].to_s.length > 0
       puts ReverseMarkdown.convert response['html_body']
+      # @TODO with ascii art
+      #image_urls = URI.extract(response['html_body']).select{ |l| l[/\.(?:gif|png|jpe?g)\b/]}
+      #image_urls.each{|url|
+      #  puts url
+      #}
+      slowput "SysOp: Have a nice day!".colorize(:green)
+      slowput "Carrier lost\n\n".colorize(:red)
     else
       slowput "Content not found or might be empty, sorry :(".colorize(:red)
     end
@@ -125,7 +132,7 @@ class MoviePilotClient
   private
 
   def slowput(s = '', line_break = true)
-    s.to_s.each_char {|c| putc c ; sleep 0.005; $stdout.flush }
+    s.to_s.each_char {|c| putc c ; sleep 0.05; $stdout.flush }
     putc "\n" if line_break
   end
 
