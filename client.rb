@@ -14,9 +14,9 @@ class MoviePilotClient
   workflow do
 
     state :new do
-      event :tag,    :transitions_to => :tag
-      event :search, :transitions_to => :search
-      event :quit,   :transitions_to => :quit
+      event :tag,       :transitions_to => :tag
+      event :search,    :transitions_to => :search
+      event :quit,      :transitions_to => :quit
     end
 
     state :tag do
@@ -33,6 +33,7 @@ class MoviePilotClient
 
     state :list do
       event :read,      :transitions_to => :read
+      event :not_found, :transitions_to => :new
     end
 
     state :read do
@@ -104,11 +105,16 @@ class MoviePilotClient
   def list_items
     slowput "SysOp: What do you want to read?".colorize(:green)
     @items.each{|item|
-      puts "#{item['id']} (#{item['type']}): #{item['name'] || item['title']}"
+      puts "#{item['id']}".colorize(:yellow) + " (#{item['type']}): #{item['name'] || item['title']}"
     }
-    @id = ask("Enter the ID of item:  ") { |q| q.default = @items.first['id'].to_s }
-    @type = @items.select{|item| item['id'].to_i == @id.to_i}.first['type']
-    self.read!
+    begin
+      @id = ask("Enter the ID of item:  ") { |q| q.default = @items.first['id'].to_s }
+      @type = @items.select{|item| item['id'].to_i == @id.to_i}.first['type']
+    rescue
+      slowput "This ID doesn't found in the list, sorry :(".colorize(:red)
+      self.not_found!
+    end
+    self.read! if @id && @type
   end
 
   def read_item
