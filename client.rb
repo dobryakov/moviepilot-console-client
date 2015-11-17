@@ -51,15 +51,15 @@ class MoviePilotClient
     @items = []
     slowput "Pshhh... Pshhh...\nCONNECTED AT 2400/NONE".colorize(:red)
     drawbox("Welcome to MoviePilot BBS!", :yellow)
-    slowput "Where are you want to go to?".colorize(:green)
+    slowput "SysOp: Where are you want to go to?".colorize(:green)
     choose do |menu|
       menu.prompt = "Please enter the number:"
       menu.choice(:tag) {
-        say("Let's go to tags menu")
+        slowput "SysOp: Let's go to tags menu".colorize(:green)
         self.tag!
       }
       menu.choice(:search) {
-        say("Let's go to search")
+        slowput "SysOp: Let's go to search".colorize(:green)
         self.search!
       }
       menu.choice(:quit) {
@@ -73,14 +73,14 @@ class MoviePilotClient
   end
 
   def tag_menu
-    puts "What tag are you interested in?  "
+    slowput "What tag are you interested in?  ".colorize(:green)
     tag = choose do |menu|
       menu.prompt = "Please enter the number:"
       %w(superheroes horror young-adult tv).each{|i|
         menu.choice(i.to_sym)
       }
     end
-    puts "Looking for tag #{tag}"
+    slowput  "Looking for tag #{tag}".colorize(:green)
     response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/tags/#{tag}/trending" )
     if response['collection'].count > 0
       @items = response['collection']
@@ -102,7 +102,7 @@ class MoviePilotClient
   end
 
   def list_items
-    puts "What do you want to read?"
+    slowput "SysOp: What do you want to read?".colorize(:green)
     @items.each{|item|
       puts "#{item['id']} (#{item['type']}): #{item['name'] || item['title']}"
     }
@@ -112,16 +112,20 @@ class MoviePilotClient
   end
 
   def read_item
-    puts "Read #{@type} #{@id}"
+    slowput "SysOp: Here is the #{@type} with id #{@id}".colorize(:green)
     response = JSON.parse( RestClient.get "http://api.moviepilot.com/v4/#{@type}s/#{@id}" )
-    puts ReverseMarkdown.convert response['html_body']
+    if response['html_body'].to_s.length > 0
+      puts ReverseMarkdown.convert response['html_body']
+    else
+      slowput "Content not found or might be empty, sorry :(".colorize(:red)
+    end
     self.new!
   end
 
   private
 
   def slowput(s = '', line_break = true)
-    s.to_s.each_char {|c| putc c ; sleep 0.05; $stdout.flush }
+    s.to_s.each_char {|c| putc c ; sleep 0.005; $stdout.flush }
     putc "\n" if line_break
   end
 
