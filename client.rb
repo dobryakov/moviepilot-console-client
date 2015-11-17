@@ -2,6 +2,7 @@ require 'workflow'
 require 'highline/import'
 require 'rest-client'
 require 'reverse_markdown'
+require 'colorize'
 
 class MoviePilotClient
   include Workflow
@@ -15,6 +16,7 @@ class MoviePilotClient
     state :new do
       event :tag,    :transitions_to => :tag
       event :search, :transitions_to => :search
+      event :quit,   :transitions_to => :quit
     end
 
     state :tag do
@@ -37,13 +39,19 @@ class MoviePilotClient
       event :new, :transitions_to => :new
     end
 
+    state :quit do
+
+    end
+
   end
 
   def start_menu
     @id    = nil
     @type  = nil
     @items = []
-    puts "Where are you want to go to?"
+    slowput "Pshhh... Pshhh...\nCONNECTED AT 2400/NONE".colorize(:red)
+    drawbox("Welcome to MoviePilot BBS!", :yellow)
+    slowput "Where are you want to go to?".colorize(:green)
     choose do |menu|
       menu.prompt = "Please enter the number:"
       menu.choice(:tag) {
@@ -54,7 +62,14 @@ class MoviePilotClient
         say("Let's go to search")
         self.search!
       }
+      menu.choice(:quit) {
+        self.quit!
+      }
     end
+  end
+
+  def logout
+    exit
   end
 
   def tag_menu
@@ -103,6 +118,23 @@ class MoviePilotClient
     self.new!
   end
 
+  private
+
+  def slowput(s = '', line_break = true)
+    s.to_s.each_char {|c| putc c ; sleep 0.05; $stdout.flush }
+    putc "\n" if line_break
+  end
+
+  def drawbox(s = '', color = :white)
+    l = s.to_s.length + 6
+    b = ''
+    l.times do b += '-' end
+    b += "\n"
+    slowput(b.colorize(color), false);
+    slowput("|  #{s}  |".colorize(color))
+    slowput(b.colorize(color), false);
+  end
+
 end
 
 client = MoviePilotClient.new
@@ -111,6 +143,8 @@ loop do
   case client.current_state.name
     when :new
       client.start_menu
+    when :quit
+      client.logout
     when :tag
       client.tag_menu
     when :search
